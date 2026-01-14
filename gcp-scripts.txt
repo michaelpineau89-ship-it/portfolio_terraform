@@ -1,0 +1,17 @@
+gcloud iam workload-identity-pools create "github-pool" \
+  --project="mike-personal-portfolio" \
+  --location="global" \
+  --display-name="GitHub Actions Pool"
+
+gcloud iam workload-identity-pools providers create-oidc "github-provider" \
+  --project="mike-personal-portfolio" \
+  --location="global" \
+  --workload-identity-pool="github-pool" \
+  --display-name="GitHub Provider" \
+  --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository" \
+  --issuer-uri="https://token.actions.githubusercontent.com"
+
+  gcloud iam service-accounts add-iam-policy-binding "flash-crash-runner@your-project-id.iam.gserviceaccount.com" \
+  --project="mike-personal-portfolio" \
+  --role="roles/iam.workloadIdentityUser" \
+  --member="principalSet://iam.googleapis.com/projects/166016129616/locations/global/workloadIdentityPools/github-pool/attribute.repository/your-github-username/portfolio_terraform"
