@@ -93,10 +93,12 @@ jobs:
       # ---------------------------------------------------------
       # TRIGGER CLOUD BUILD (Only after infra is live)
       # ---------------------------------------------------------
-      - name: Trigger Cloud Build
+      # 1. Install the gcloud CLI (it picks up the auth from the previous step automatically)
+      - name: Set up Cloud SDK
         if: steps.tf_apply.outcome == 'success'
-        uses: 'google-github-actions/deploy-cloudbuild@v2'
-        with:
-          project_id: ${{ secrets.GCP_PROJECT_ID }}
-          source: '.'
-          config: 'cloudbuild.yaml'
+        uses: 'google-github-actions/setup-gcloud@v2'
+
+      # 2. Submit the build manually using the standard command
+      - name: Submit Build to Cloud Build
+        if: steps.tf_apply.outcome == 'success'
+        run: gcloud builds submit --config=cloudbuild.yaml .
