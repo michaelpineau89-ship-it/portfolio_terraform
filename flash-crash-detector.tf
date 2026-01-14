@@ -1,8 +1,3 @@
-provider "google" {
-  project = "your-project-id" # Replace with your project ID
-  region  = "us-central1"
-}
-
 # ==========================================
 # 1. NETWORKING & SECURITY (The Foundation)
 # ==========================================
