@@ -67,9 +67,10 @@ resource "google_project_iam_member" "dataflow_worker" {
     "roles/bigquery.dataEditor",
     "roles/storage.objectAdmin"
   ])
-  role    = each.key
-  member  = "serviceAccount:${google_service_account.dataflow_sa.email}"
-  project = var.project_id
+  role   = each.key
+  member = "serviceAccount:${google_service_account.dataflow_sa.email}"
+  # usage: coalesce(value1, value2) -> takes the first one that isn't null/empty
+  project = coalesce(var.project_id, "mike-personal-portfolio")
 }
 
 # ==========================================
