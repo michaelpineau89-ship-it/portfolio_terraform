@@ -1,5 +1,5 @@
 provider "google" {
-  project                     = var.project_id
-  region                      = var.region
-  impersonate_service_account = var.tf_service_account_email
+  project                     = "mike-personal-portfolio "
+  region                      = "us-central1"
+  impersonate_service_account = "terraform-deployer@mike-personal-portfolio.iam.gserviceaccount.com"
 }
