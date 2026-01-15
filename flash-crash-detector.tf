@@ -69,7 +69,6 @@ resource "google_project_iam_member" "dataflow_worker" {
   ])
   role    = each.key
   member  = "serviceAccount:${google_service_account.dataflow_sa.email}"
-  project = var.project_id
 }
 
 # ==========================================
