@@ -8,6 +8,23 @@ This repository serves as the centralized **Infrastructure-as-Code (IaC)** found
 
 ## 📐 Architecture & Design Philosophy
 
+### Architecture Diagram
+
+```mermaid
+graph LR
+    User[Stock Market API] -->|JSON Stream| PubSub(Cloud Pub/Sub)
+    PubSub -->|Read| Dataflow(Flash Crash Detector)
+    Dataflow -->|Write| BQ[(BigQuery Table)]
+    Dataflow -->|Alert| Logs(Cloud Logging)
+    
+    subgraph GCP [Google Cloud Platform]
+        PubSub
+        Dataflow
+        BQ
+        Logs
+    end
+```
+
 ### The "One-File-Per-Project" Strategy
 Unlike a typical enterprise environment where projects are isolated by folder or state file, this repository intentionally uses a **Flat Structure** where each distinct portfolio project is defined in its own standalone `.tf` file (e.g., `flash-crash-detector.tf`).
 
