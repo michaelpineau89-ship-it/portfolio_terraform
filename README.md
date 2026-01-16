@@ -85,5 +85,22 @@ Infrastructure changes are managed via a GitOps workflow using **GitHub Actions*
     terraform apply
     ```
 
+## Architecture Decision Records (ADRs)
+### 1. Single-File Terraform Strategy
+
+**Date:** 2026-01-15
+**Status:** Accepted
+
+### Context
+We need a way to manage infrastructure for multiple small portfolio projects without the overhead of complex module management or multiple state buckets.
+
+### Decision
+We will define each project in its own standalone `.tf` file within the root directory, sharing a single remote state backend.
+
+### Consequences
+* **Positive:** Faster iteration speed; simplified state management; shared networking layers are implicit.
+* **Negative:** Risk of resource naming collisions; `terraform plan` runs against all resources simultaneously (slower as project grows).
+* **Mitigation:** We will strictly prefix all resource names with the project name (e.g., `flash_crash_...`).
+
 ---
 *Maintained by Mike Pineau*
