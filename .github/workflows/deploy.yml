@@ -1,0 +1,59 @@
+name: Build & Deploy
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  REGION: us-central1
+  REPO_NAME: flash-crash-repo
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    # 1. Authenticate to Google Cloud
+    - id: 'auth'
+      uses: 'google-github-actions/auth@v2'
+      with:
+        credentials_json: '${{ secrets.GCP_SA_KEY }}'
+
+    # 2. Configure Docker to use gcloud as a credential helper
+    - name: Configure Docker
+      run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+
+    # 3. Build & Push Ingestion Service (Cloud Function)
+    - name: Build Ingestion Image
+      run: |
+        docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/ingestion-service:latest ./src/ingestion
+        docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/ingestion-service:latest
+
+    # 4. Build & Push Dataflow Flex Template Image
+    - name: Build Dataflow Image
+      run: |
+        docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/dataflow-worker:latest ./src/pipeline
+        docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/dataflow-worker:latest
+
+    # 5. Create & Upload Dataflow Spec File
+    - name: Upload Dataflow Spec
+      run: |
+        cat <<EOF > flash_crash_spec.json
+        {
+          "image": "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/dataflow-worker:latest",
+          "sdkInfo": {"language": "PYTHON"}
+        }
+        EOF
+        # We assume the bucket is created by TF already. 
+        # For the first run, you might need to rely on TF creating it, 
+        # so often we separate "Infra" and "App" deployments.
+        gsutil cp flash_crash_spec.json gs://flash-crash-templates-*/flash_crash_spec.json
+
+  terraform:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      # ... (Your existing Terraform Plan/Apply steps here) ...
