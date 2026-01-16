@@ -12,10 +12,18 @@ This repository serves as the centralized **Infrastructure-as-Code (IaC)** found
 
 ```mermaid
 graph LR
-    User[Stock Market API] -->|JSON Stream| PubSub(Cloud Pub/Sub)
-    PubSub -->|Read| Dataflow(Flash Crash Detector)
-    Dataflow -->|Write| BQ[(BigQuery Table)]
-    Dataflow -->|Alert| Logs(Cloud Logging)
+    API[Alpha Vantage API] -->|HTTPS Fetch| Producer[Ingestion Script]
+    Producer -->|Publish JSON| PubSub(Cloud Pub/Sub)
+    
+    subgraph Dataflow [Cloud Dataflow Pipeline]
+        Reader(JSON Reader/Parser)
+        Detector(Flash Crash Detector)
+    end
+    
+    PubSub -->|Subscribe| Reader
+    Reader -->|Windowed Stream| Detector
+    Detector -->|Insert Rows| BQ[(BigQuery Table)]
+    Detector -->|Alert| Logs(Cloud Logging)
     
     subgraph GCP [Google Cloud Platform]
         PubSub
