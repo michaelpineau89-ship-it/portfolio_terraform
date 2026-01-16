@@ -6,35 +6,40 @@
 
 This repository serves as the centralized **Infrastructure-as-Code (IaC)** foundation for my personal data engineering portfolio. It manages all cloud resources (Networking, IAM, Compute, Data) on **Google Cloud Platform (GCP)**.
 
-## 📐 Architecture & Design Philosophy
+## 📐 Infrastructure Topology
 
-### Architecture Diagram
+This diagram represents the foundational network and resource structure provisioned by this repository.
 
 ```mermaid
-graph LR
-    API[Alpha Vantage API] -->|HTTPS Fetch| Producer[Ingestion Script]
-    Producer -->|Publish JSON| PubSub(Cloud Pub/Sub)
-    
-    subgraph Dataflow [Cloud Dataflow Pipeline]
-        Reader(JSON Reader/Parser)
-        Detector(Flash Crash Detector)
-    end
-    
-    PubSub -->|Subscribe| Reader
-    Reader -->|Windowed Stream| Detector
-    Detector -->|Insert Rows| BQ[(BigQuery Table)]
-    Detector -->|Alert| Logs(Cloud Logging)
-    
+graph TD
     subgraph GCP [Google Cloud Platform]
-        PubSub
-        Dataflow
-        BQ
-        Logs
+        IAM[IAM Roles & Service Accounts]
+        
+        subgraph Network [Shared VPC: flash-crash-vpc]
+            NAT[Cloud NAT Gateway]
+            FW[Firewall Rules]
+            
+            subgraph Subnet [Subnet: us-central1]
+                DF_Worker[Dataflow Workers]
+                VM[Compute Instances]
+            end
+        end
+        
+        NAT -->|Egress| Internet[Public Internet]
+        
+        subgraph Storage
+            GCS[State & Data Buckets]
+            BQ[BigQuery Datasets]
+            PubSub[Pub/Sub Topics]
+        end
     end
+    
+    Terraform[Terraform Cloud/CLI] -->|Provisions| GCP
 ```
 
+## 🧠 Design Philosophy
 ### The "One-File-Per-Project" Strategy
-Unlike a typical enterprise environment where projects are isolated by folder or state file, this repository intentionally uses a **Flat Structure** where each distinct portfolio project is defined in its own standalone `.tf` file (e.g., `flash-crash-detector.tf`).
+Unlike a typical enterprise environment where projects are isolated by folder or state file, this repository intentionally uses a Flat Structure where each distinct portfolio project is defined in its own standalone .tf file (e.g., flash-crash-detector.tf).
 
 **Why this approach?**
 * **Agility:** Allows for rapid spinning up/down of experimental architectures without the overhead of bootstrapping new backends for every prototype.
