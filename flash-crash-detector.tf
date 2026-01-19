@@ -88,7 +88,7 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
   provider                = google-beta
   name                    = "flash-crash-detector-live"
   container_spec_gcs_path = "gs://${google_storage_bucket.dataflow_templates.name}/flash_crash_spec.json"
-  
+
   # Parameters to pass to your pipeline.py
   parameters = {
     input_subscription = google_pubsub_subscription.stock_ticks_sub.id
@@ -109,7 +109,7 @@ resource "google_cloud_run_v2_service" "ingestion_service" {
       # Terraform will deploy whatever image tag is currently "latest" 
       # or you can pass a variable for specific SHA
       image = "${var.region}-docker.pkg.dev/${var.project_id}/flash_crash_repo/ingestion-service:latest"
-      
+
       env {
         name  = "PROJECT_ID"
         value = var.project_id
@@ -128,7 +128,7 @@ resource "google_cloud_scheduler_job" "poller_trigger" {
   http_target {
     http_method = "POST"
     uri         = google_cloud_run_v2_service.ingestion_service.uri
-    
+
     oidc_token {
       service_account_email = google_service_account.dataflow_sa.email
     }
