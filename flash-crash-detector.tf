@@ -120,21 +120,20 @@ resource "google_storage_bucket" "dataflow_templates" {
 #  }
 #}
 
-# 3. The Scheduler Trigger (Same as before, just hits the Cloud Run URL)
-resource "google_cloud_scheduler_job" "poller_trigger" {
-  name             = "every-minute-trigger"
-  schedule         = "* * * * *"
-  attempt_deadline = "30s"
-
-  http_target {
-    http_method = "POST"
-    uri         = google_cloud_run_v2_service.ingestion_service.uri
-
-    oidc_token {
-      service_account_email = google_service_account.dataflow_sa.email
-    }
-  }
-}
+# resource "google_cloud_scheduler_job" "poller_trigger" {
+#   name             = "every-minute-trigger"
+#   schedule         = "* * * * *"
+#   attempt_deadline = "30s"
+#
+#   http_target {
+#     http_method = "POST"
+#     uri         = google_cloud_run_v2_service.ingestion_service.uri
+#
+#     oidc_token {
+#       service_account_email = google_service_account.dataflow_sa.email
+#     }
+#   }
+# }
 # ==========================================
 # 5. DATA INFRASTRUCTURE
 # ==========================================
