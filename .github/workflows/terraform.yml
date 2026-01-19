@@ -52,7 +52,7 @@ jobs:
         id: plan
         if: github.event_name == 'pull_request'
         # We pass the project_id variable into Terraform here
-        run: terraform plan -no-color -input=false -var="tf_service_account_email=${{ secrets.GCP_TF_SA_EMAIL }}"
+        run: terraform plan -no-color -input=false -var="project_id=${{ secrets.GCP_PROJECT_ID }}" -var="tf_service_account_email=${{ secrets.GCP_TF_SA_EMAIL }}"
         continue-on-error: true
 
       - name: Update Pull Request with Plan
