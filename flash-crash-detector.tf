@@ -84,18 +84,18 @@ resource "google_storage_bucket" "dataflow_templates" {
 }
 
 # 2. The Dataflow Job (Flex Template)
-resource "google_dataflow_flex_template_job" "flash_crash_job" {
-  provider                = google-beta
-  name                    = "flash-crash-detector-live"
-  region                  = var.region
-  container_spec_gcs_path = "gs://${google_storage_bucket.dataflow_templates.name}/flash_crash_spec.json"
+#resource "google_dataflow_flex_template_job" "flash_crash_job" {
+#  provider                = google-beta
+#  name                    = "flash-crash-detector-live"
+#  region                  = var.region
+#  container_spec_gcs_path = "gs://${google_storage_bucket.dataflow_templates.name}/flash_crash_spec.json"
 
-  # Parameters to pass to your pipeline.py
-  parameters = {
-    input_subscription = google_pubsub_subscription.stock_ticks_sub.id
-    output_table       = "${var.project_id}:flash_crash_data.crashes"
-  }
-}
+#  # Parameters to pass to your pipeline.py
+#  parameters = {
+#    input_subscription = google_pubsub_subscription.stock_ticks_sub.id
+#    output_table       = "${var.project_id}:flash_crash_data.crashes"
+#  }
+#}
 
 # ==========================================
 # 4. CLOUD FUNCTIONS
