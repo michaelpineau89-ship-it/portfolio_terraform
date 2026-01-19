@@ -1,22 +1,35 @@
-name: Build & Deploy
+name: Build & Deploy Artifacts
 
 on:
   push:
     branches: [ "main" ]
+    paths:
+      - 'src/**'
+      - 'requirements.txt'
+      - 'Dockerfile'
+      - '.github/workflows/deploy.yml'
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: us-central1
-  REPO_NAME: flash-crash-repo
+  REPO_NAME: flash-crash-repo  # Must match the repository_id in your Terraform
+  # CRITICAL: You must add this bucket name to your GitHub Secrets after Terraform creates it!
+  TEMPLATE_BUCKET: ${{ secrets.GCS_TEMPLATE_BUCKET }} 
 
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: 'read'
+      id-token: 'write'
+
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout Code
+      uses: actions/checkout@v4
 
     # 1. Authenticate to Google Cloud
     - id: 'auth'
+      name: 'Authenticate to GCP'
       uses: 'google-github-actions/auth@v2'
       with:
         credentials_json: '${{ secrets.GCP_SA_KEY }}'
@@ -25,19 +38,28 @@ jobs:
     - name: Configure Docker
       run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
 
-    # 3. Build & Push Ingestion Service (Cloud Function)
+    # 3. Build & Push Ingestion Service (Cloud Run)
+    # Note: Context is '.' (Root), but Dockerfile is in subfolder
     - name: Build Ingestion Image
       run: |
-        docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/ingestion-service:latest ./src/ingestion
+        docker build \
+          -f src/ingestion/Dockerfile \
+          -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/ingestion-service:latest \
+          .
         docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/ingestion-service:latest
 
-    # 4. Build & Push Dataflow Flex Template Image
+    # 4. Build & Push Dataflow Worker (Flex Template)
+    # Note: Context is '.' (Root)
     - name: Build Dataflow Image
       run: |
-        docker build -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/dataflow-worker:latest ./src/pipeline
+        docker build \
+          -f src/pipeline/Dockerfile \
+          -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/dataflow-worker:latest \
+          .
         docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/dataflow-worker:latest
 
-    # 5. Create & Upload Dataflow Spec File
+    # 5. Generate & Upload Flex Template Spec File
+    # This file tells Dataflow which Docker image to use
     - name: Upload Dataflow Spec
       run: |
         cat <<EOF > flash_crash_spec.json
@@ -46,14 +68,6 @@ jobs:
           "sdkInfo": {"language": "PYTHON"}
         }
         EOF
-        # We assume the bucket is created by TF already. 
-        # For the first run, you might need to rely on TF creating it, 
-        # so often we separate "Infra" and "App" deployments.
-        gsutil cp flash_crash_spec.json gs://flash-crash-templates-*/flash_crash_spec.json
-
-  terraform:
-    needs: build-and-push
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      # ... (Your existing Terraform Plan/Apply steps here) ...
+        
+        # Uploads to: gs://[YOUR_BUCKET]/templates/flash_crash_spec.json
+        gsutil cp flash_crash_spec.json gs://${{ env.TEMPLATE_BUCKET }}/templates/flash_crash_spec.json
