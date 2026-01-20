@@ -55,7 +55,7 @@ resource "google_service_account_iam_member" "wif_binding" {
 
   # TRUST ONLY THIS REPO:
   member = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/${var.project_id}/flash_crash_detector"
-} 
+}
 
 # Output the Provider Name (You need this for the GitHub Action)
 output "wif_provider_name" {
