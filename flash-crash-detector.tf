@@ -65,7 +65,8 @@ resource "google_project_iam_member" "dataflow_worker" {
     "roles/dataflow.admin",
     "roles/pubsub.editor",
     "roles/bigquery.dataEditor",
-    "roles/storage.objectAdmin"
+    "roles/storage.objectAdmin",
+    "roles/artifactregistry.writer"
   ])
   role   = each.key
   member = "serviceAccount:${google_service_account.dataflow_sa.email}"
