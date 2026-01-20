@@ -34,8 +34,8 @@ resource "google_iam_workload_identity_pool" "github_pool" {
 # 2. The Provider (Minimal Version)
 resource "google_iam_workload_identity_pool_provider" "github_provider" {
   workload_identity_pool_id          = google_iam_workload_identity_pool.github_pool.workload_identity_pool_id
-  workload_identity_pool_provider_id = "github-provider"
-  display_name                       = "GitHub Provider"
+  workload_identity_pool_provider_id = "github-provider-v2"
+  display_name                       = "GitHub Provider-v2"
 
   # Let's try mapping ONLY the required subject first.
   # This proves if the issue is with the custom attributes.
