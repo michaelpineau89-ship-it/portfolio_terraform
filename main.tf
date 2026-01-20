@@ -24,24 +24,29 @@ resource "google_artifact_registry_repository" "repo" {
   format        = "DOCKER"
 }
 
-# 1. The Pool (The "Clubhouse" for external identities)
+# 1. The Pool (V3 - Final Clean Slate)
 resource "google_iam_workload_identity_pool" "github_pool" {
-  workload_identity_pool_id = "github-actions-pool-v2"
-  display_name              = "GitHub Actions Pool 2"
+  workload_identity_pool_id = "github-actions-pool-v3" # Changed ID
+  display_name              = "GitHub Actions Pool V3"
   description               = "Identity pool for GitHub Actions"
 }
 
-# 2. The Provider (Minimal Version)
+# 2. The Provider (V3 - With Explicit Condition)
 resource "google_iam_workload_identity_pool_provider" "github_provider" {
   workload_identity_pool_id          = google_iam_workload_identity_pool.github_pool.workload_identity_pool_id
-  workload_identity_pool_provider_id = "github-provider-v2"
-  display_name                       = "GitHub Provider-v2"
+  workload_identity_pool_provider_id = "github-provider-v3" # Changed ID
+  display_name                       = "GitHub Provider V3"
 
-  # Let's try mapping ONLY the required subject first.
-  # This proves if the issue is with the custom attributes.
+  # A. Map the repository claim so we can use it
   attribute_mapping = {
-    "google.subject" = "assertion.sub"
+    "google.subject"       = "assertion.sub"
+    "attribute.repository" = "assertion.repository"
   }
+
+  # B. EXPLICIT CONDITION (The Fix)
+  # Instead of leaving this blank (which causes the error), we explicitly 
+  # check the repo name here. This satisfies the "must reference a claim" rule.
+  attribute_condition = "assertion.repository == 'michaelpineau89-ship-it/flash_crash_detector'"
 
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
