@@ -31,22 +31,24 @@ resource "google_iam_workload_identity_pool" "github_pool" {
   description               = "Identity pool for GitHub Actions"
 }
 
-# 2. The Provider (V3 - With Explicit Condition)
+# 2. The Provider (V3 - Updated for Multi-Repo Support)
 resource "google_iam_workload_identity_pool_provider" "github_provider" {
   workload_identity_pool_id          = google_iam_workload_identity_pool.github_pool.workload_identity_pool_id
-  workload_identity_pool_provider_id = "github-provider-v3" # Changed ID
+  workload_identity_pool_provider_id = "github-provider-v3"
   display_name                       = "GitHub Provider V3"
 
-  # A. Map the repository claim so we can use it
+  # Map the claims so we can use them in IAM
   attribute_mapping = {
     "google.subject"       = "assertion.sub"
+    "attribute.actor"      = "assertion.actor"
     "attribute.repository" = "assertion.repository"
+    # Added Owner mapping just in case we need it for IAM later
+    "attribute.owner"      = "assertion.repository_owner"
   }
 
-  # B. EXPLICIT CONDITION (The Fix)
-  # Instead of leaving this blank (which causes the error), we explicitly 
-  # check the repo name here. This satisfies the "must reference a claim" rule.
-  attribute_condition = "assertion.repository == 'michaelpineau89-ship-it/flash_crash_detector'"
+  # THE FIX: Allow ANY repo owned by 'michaelpineau89-ship-it'
+  # This lets 'portfolio_terraform', 'flash_crash_detector', and future projects authenticate.
+  attribute_condition = "assertion.repository_owner == 'michaelpineau89-ship-it'"
 
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
