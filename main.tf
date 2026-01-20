@@ -50,7 +50,7 @@ resource "google_iam_workload_identity_pool_provider" "github_provider" {
 resource "google_service_account_iam_member" "wif_binding" {
   service_account_id = google_service_account.dataflow_sa.name
   role               = "roles/iam.workloadIdentityUser"
-  
+
   # TRUST ONLY THIS REPO:
   member = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/${var.project_id}/flash_crash_detector"
 }
