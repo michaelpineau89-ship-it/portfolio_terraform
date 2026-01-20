@@ -26,8 +26,8 @@ resource "google_artifact_registry_repository" "repo" {
 
 # 1. The Pool (The "Clubhouse" for external identities)
 resource "google_iam_workload_identity_pool" "github_pool" {
-  workload_identity_pool_id = "github-actions-pool"
-  display_name              = "GitHub Actions Pool"
+  workload_identity_pool_id = "github-actions-pool-v2"
+  display_name              = "GitHub Actions Pool 2"
   description               = "Identity pool for GitHub Actions"
 }
 
