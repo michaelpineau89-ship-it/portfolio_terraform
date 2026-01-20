@@ -43,7 +43,7 @@ resource "google_iam_workload_identity_pool_provider" "github_provider" {
     "attribute.actor"      = "assertion.actor"
     "attribute.repository" = "assertion.repository"
     # Added Owner mapping just in case we need it for IAM later
-    "attribute.owner"      = "assertion.repository_owner"
+    "attribute.owner" = "assertion.repository_owner"
   }
 
   # THE FIX: Allow ANY repo owned by 'michaelpineau89-ship-it'
