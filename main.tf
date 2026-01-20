@@ -31,19 +31,27 @@ resource "google_iam_workload_identity_pool" "github_pool" {
   description               = "Identity pool for GitHub Actions"
 }
 
-# 2. The Provider (The "Bouncer" that checks GitHub's ID)
+# 2. The Provider (The "Bouncer" verifying GitHub's OIDC tokens)
 resource "google_iam_workload_identity_pool_provider" "github_provider" {
   workload_identity_pool_id          = google_iam_workload_identity_pool.github_pool.workload_identity_pool_id
   workload_identity_pool_provider_id = "github-provider"
   display_name                       = "GitHub Provider"
+  
+  # 1. Map GitHub's "assertion.repository" to GCP's "attribute.repository"
+  # This makes the repository name available for IAM conditions later.
   attribute_mapping = {
     "google.subject"       = "assertion.sub"
     "attribute.actor"      = "assertion.actor"
     "attribute.repository" = "assertion.repository"
   }
+
   oidc {
     issuer_uri = "https://token.actions.githubusercontent.com"
   }
+
+  # IMPORTANT: Do NOT include an 'attribute_condition' block here unless 
+  # you want to block ALL repos except one at the front door.
+  # We restrict access in the IAM Binding resource instead.
 }
 
 # 3. The Permission (Allowing the GitHub Repo to act as the Service Account)
