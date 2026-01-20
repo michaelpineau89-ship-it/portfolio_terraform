@@ -36,7 +36,7 @@ resource "google_iam_workload_identity_pool_provider" "github_provider" {
   workload_identity_pool_id          = google_iam_workload_identity_pool.github_pool.workload_identity_pool_id
   workload_identity_pool_provider_id = "github-provider"
   display_name                       = "GitHub Provider"
-  
+
   # 1. Map GitHub's "assertion.repository" to GCP's "attribute.repository"
   # This makes the repository name available for IAM conditions later.
   attribute_mapping = {
@@ -61,7 +61,7 @@ resource "google_service_account_iam_member" "wif_binding" {
 
   # TRUST ONLY THIS REPO:
   member = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/${var.project_id}/flash_crash_detector"
-} 
+}
 
 # Output the Provider Name (You need this for the GitHub Action)
 output "wif_provider_name" {
