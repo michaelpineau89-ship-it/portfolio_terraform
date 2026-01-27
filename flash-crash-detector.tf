@@ -85,13 +85,13 @@ resource "google_storage_bucket" "dataflow_templates" {
 }
 
 # 2. The Dataflow Job (Flex Template)
-#resource "google_dataflow_flex_template_job" "flash_crash_job" {
+resource "google_dataflow_flex_template_job" "flash_crash_job" {
   provider                = google-beta
   name                    = "flash-crash-detector-live"
   region                  = var.region
   container_spec_gcs_path = "gs://${google_storage_bucket.dataflow_templates.name}/flash_crash_spec.json"
 
-#  # Parameters to pass to your pipeline.py
+  # Parameters to pass to your pipeline.py
   parameters = {
     input_subscription = google_pubsub_subscription.stock_ticks_sub.id
     output_table       = "${var.project_id}:flash_crash_data.crashes"
@@ -101,7 +101,7 @@ resource "google_storage_bucket" "dataflow_templates" {
 # ==========================================
 # 4. CLOUD FUNCTIONS
 # ==========================================
-#resource "google_cloud_run_v2_service" "ingestion_service" {
+resource "google_cloud_run_v2_service" "ingestion_service" {
   name     = "stock-ingestion-service"
   location = var.region
   ingress  = "INGRESS_TRAFFIC_ALL"
@@ -121,20 +121,20 @@ resource "google_storage_bucket" "dataflow_templates" {
   }
 }
 
-# resource "google_cloud_scheduler_job" "poller_trigger" {
-   name             = "every-minute-trigger"
-   schedule         = "* * * * *"
-   attempt_deadline = "30s"
+resource "google_cloud_scheduler_job" "poller_trigger" {
+  name             = "every-minute-trigger"
+  schedule         = "* * * * *"
+  attempt_deadline = "30s"
 
-   http_target {
-     http_method = "POST"
-     uri         = google_cloud_run_v2_service.ingestion_service.uri
+  http_target {
+    http_method = "POST"
+    uri         = google_cloud_run_v2_service.ingestion_service.uri
 
-     oidc_token {
-       service_account_email = google_service_account.dataflow_sa.email
-     }
-   }
- }
+    oidc_token {
+      service_account_email = google_service_account.dataflow_sa.email
+    }
+  }
+}
 # ==========================================
 # 5. DATA INFRASTRUCTURE
 # ==========================================
