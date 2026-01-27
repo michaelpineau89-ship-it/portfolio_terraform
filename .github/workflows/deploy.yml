@@ -1,73 +1,55 @@
-name: Build & Deploy Artifacts
+name: Terraform Infrastructure
 
 on:
   push:
-    branches: [ "main" ]
-    paths:
-      - 'src/**'
-      - 'requirements.txt'
-      - 'Dockerfile'
-      - '.github/workflows/deploy.yml'
-
-env:
-  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
-  REGION: us-central1
-  REPO_NAME: flash-crash-repo  # Must match the repository_id in your Terraform
-  # CRITICAL: You must add this bucket name to your GitHub Secrets after Terraform creates it!
-  TEMPLATE_BUCKET: ${{ secrets.GCS_TEMPLATE_BUCKET }} 
+    branches: [ "main", "feature/*" ]
+  pull_request:
 
 jobs:
-  build-and-push:
+  terraform:
     runs-on: ubuntu-latest
     permissions:
       contents: 'read'
-      id-token: 'write'
+      id-token: 'write'     # <--- Critical for WIF
+      pull-requests: 'write' # Needed for PR comments
 
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
 
-    # 1. Authenticate to Google Cloud
+    # 1. Authenticate to Google Cloud (WIF EDITION)
     - id: 'auth'
       name: 'Authenticate to GCP'
       uses: 'google-github-actions/auth@v2'
       with:
-        credentials_json: '${{ secrets.GCP_SA_KEY }}'
+        # The exact same provider string you used in the other repo
+        workload_identity_provider: '${{ secrets.GCP_WIF_PROVIDER }}'
+        # Note: We use the DEPLOYER account here, not the Runner
+        service_account: 'terraform-deployer@mike-personal-portfolio.iam.gserviceaccount.com'
 
-    # 2. Configure Docker to use gcloud as a credential helper
-    - name: Configure Docker
-      run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev
+    # 2. Setup Terraform
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
 
-    # 3. Build & Push Ingestion Service (Cloud Run)
-    # Note: Context is '.' (Root), but Dockerfile is in subfolder
-    - name: Build Ingestion Image
-      run: |
-        docker build \
-          -f src/ingestion/Dockerfile \
-          -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/ingestion-service:latest \
-          .
-        docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/ingestion-service:latest
+    # 3. Terraform Init
+    - name: Terraform Init
+      run: terraform init -backend-config="bucket=mike-personal-portfolio-tf-state"
+      env:
+        GOOGLE_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
 
-    # 4. Build & Push Dataflow Worker (Flex Template)
-    # Note: Context is '.' (Root)
-    - name: Build Dataflow Image
-      run: |
-        docker build \
-          -f src/pipeline/Dockerfile \
-          -t ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/dataflow-worker:latest \
-          .
-        docker push ${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/dataflow-worker:latest
-
-    # 5. Generate & Upload Flex Template Spec File
-    # This file tells Dataflow which Docker image to use
-    - name: Upload Dataflow Spec
-      run: |
-        cat <<EOF > flash_crash_spec.json
-        {
-          "image": "${{ env.REGION }}-docker.pkg.dev/${{ env.PROJECT_ID }}/${{ env.REPO_NAME }}/dataflow-worker:latest",
-          "sdkInfo": {"language": "PYTHON"}
-        }
-        EOF
-        
-        # Uploads to: gs://[YOUR_BUCKET]/templates/flash_crash_spec.json
-        gsutil cp flash_crash_spec.json gs://${{ env.TEMPLATE_BUCKET }}/templates/flash_crash_spec.json
+    # 4. Terraform Plan
+    - name: Terraform Plan
+      run: terraform plan -input=false
+      env:
+        TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+        TF_VAR_tf_service_account_email: ${{ secrets.GCP_TF_SA_EMAIL }}
+        GOOGLE_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
+      
+    # 5. Terraform Apply (Only on Main)
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+      run: terraform apply -auto-approve -input=false
+      env:
+        TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+        TF_VAR_tf_service_account_email: ${{ secrets.GCP_TF_SA_EMAIL }}
+        GOOGLE_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
