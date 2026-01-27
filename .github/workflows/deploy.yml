@@ -42,6 +42,8 @@ jobs:
       run: terraform plan -input=false
       env:
         TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+        TF_VAR_tf_service_account_email: ${{ secrets.GCP_TF_SA_EMAIL }}
+        GOOGLE_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
       
     # 5. Terraform Apply (Only on Main)
     - name: Terraform Apply
@@ -49,3 +51,5 @@ jobs:
       run: terraform apply -auto-approve -input=false
       env:
         TF_VAR_project_id: ${{ secrets.GCP_PROJECT_ID }}
+        TF_VAR_tf_service_account_email: ${{ secrets.GCP_TF_SA_EMAIL }}
+        GOOGLE_CREDENTIALS: ${{ steps.auth.outputs.credentials_file_path }}
