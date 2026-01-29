@@ -89,7 +89,7 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
   provider                = google-beta
   name                    = "flash-crash-detector-live"
   region                  = var.region
-  container_spec_gcs_path = "gs://${google_storage_bucket.dataflow_templates.name}/flash_crash_spec.json"
+  container_spec_gcs_path = "gs://${google_storage_bucket.dataflow_templates.name}/templates/flash_crash_spec.json"
 
   # Parameters to pass to your pipeline.py
   parameters = {
