@@ -7,7 +7,7 @@ variable "project_id" {
 variable "region" {
   description = "Default GCP Region"
   type        = string
-  default     = "us-central1"
+  default     = "us-east1"
 }
 
 variable "tf_service_account_email" {
