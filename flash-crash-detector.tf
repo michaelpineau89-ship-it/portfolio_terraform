@@ -113,7 +113,7 @@ resource "google_cloud_run_v2_service" "ingestion_service" {
       image = "${var.region}-docker.pkg.dev/${var.project_id}/flash_crash_repo/ingestion-service:latest"
 
       env {
-        name  = "PROJECT_ID"
+        name  = "mike-personal-portfolio"
         value = var.project_id
       }
     }
