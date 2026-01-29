@@ -89,7 +89,7 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
   provider                = google-beta
   name                    = "flash-crash-detector-live"
   region                  = var.region
-  container_spec_gcs_path = "gs://${google_storage_bucket.dataflow_templates.name}/flash_crash_spec.json"
+  container_spec_gcs_path = "gs://${google_storage_bucket.dataflow_templates.name}/templates/flash_crash_spec.json"
 
   # Parameters to pass to your pipeline.py
   parameters = {
@@ -110,7 +110,7 @@ resource "google_cloud_run_v2_service" "ingestion_service" {
     containers {
       # Terraform will deploy whatever image tag is currently "latest" 
       # or you can pass a variable for specific SHA
-      image = "${var.region}-docker.pkg.dev/${var.project_id}/flash_crash_repo/ingestion-service:latest"
+      image = "${var.region}-docker.pkg.dev/${var.project_id}/flash-crash-repo/ingestion-service:latest"
 
       env {
         name  = "mike-personal-portfolio"
