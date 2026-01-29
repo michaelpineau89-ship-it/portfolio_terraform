@@ -110,7 +110,7 @@ resource "google_cloud_run_v2_service" "ingestion_service" {
     containers {
       # Terraform will deploy whatever image tag is currently "latest" 
       # or you can pass a variable for specific SHA
-      image = "${var.region}-docker.pkg.dev/${var.project_id}/flash_crash_repo/ingestion-service:latest"
+      image = "${var.region}-docker.pkg.dev/${var.project_id}/flash-crash-repo/ingestion-service:latest"
 
       env {
         name  = "mike-personal-portfolio"
