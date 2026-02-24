@@ -110,7 +110,8 @@ resource "google_cloud_run_v2_service" "ingestion_service" {
   name     = "stock-ingestion-service"
   location = var.region
   ingress  = "INGRESS_TRAFFIC_ALL"
-
+  deletion_protection = false
+  
   template {
     containers {
       # Terraform will deploy whatever image tag is currently "latest" 
