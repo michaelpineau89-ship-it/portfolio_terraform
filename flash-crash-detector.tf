@@ -91,9 +91,9 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
   region                  = var.region
   project                 = var.project_id
   container_spec_gcs_path = "gs://${google_storage_bucket.dataflow_templates.name}/templates/flash_crash_spec.json"
-  
+
   service_account_email = google_service_account.dataflow_sa.email
-  
+
   # Parameters to pass to your pipeline.py
   parameters = {
     workerRegion       = "us-central1"
@@ -107,11 +107,11 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
 # 4. CLOUD FUNCTIONS
 # ==========================================
 resource "google_cloud_run_v2_service" "ingestion_service" {
-  name     = "stock-ingestion-service"
-  location = var.region
-  ingress  = "INGRESS_TRAFFIC_ALL"
+  name                = "stock-ingestion-service"
+  location            = var.region
+  ingress             = "INGRESS_TRAFFIC_ALL"
   deletion_protection = false
-  
+
   template {
     containers {
       # Terraform will deploy whatever image tag is currently "latest" 
