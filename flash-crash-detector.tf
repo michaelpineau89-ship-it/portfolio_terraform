@@ -88,7 +88,7 @@ resource "google_storage_bucket" "dataflow_templates" {
 resource "google_dataflow_flex_template_job" "flash_crash_job" {
   provider                = google-beta
   name                    = "flash-crash-detector-live"
-  region                  = us-central1
+  region                  = "us-central1"
   project                 = var.project_id
   container_spec_gcs_path = "gs://${google_storage_bucket.dataflow_templates.name}/templates/flash_crash_spec.json"
 
