@@ -12,7 +12,7 @@ resource "google_compute_network" "vpc" {
 resource "google_compute_subnetwork" "subnet" {
   name          = "dataflow-subnet"
   ip_cidr_range = "10.0.0.0/24"
-  region        = "us-central1"
+  region        = "us-east1"
   network       = google_compute_network.vpc.id
 
   # Important: simple access to Google APIs (like Pub/Sub) without going over public internet
@@ -23,13 +23,13 @@ resource "google_compute_subnetwork" "subnet" {
 resource "google_compute_router" "router" {
   name    = "dataflow-router"
   network = google_compute_network.vpc.id
-  region  = "us-central1"
+  region  = "us-east1"
 }
 
 resource "google_compute_router_nat" "nat" {
   name                               = "dataflow-nat"
   router                             = google_compute_router.router.name
-  region                             = "us-central1"
+  region                             = "us-east1"
   nat_ip_allocate_option             = "AUTO_ONLY"
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
 }
