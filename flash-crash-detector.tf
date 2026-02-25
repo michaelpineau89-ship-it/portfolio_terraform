@@ -88,7 +88,7 @@ resource "google_storage_bucket" "dataflow_templates" {
 resource "google_dataflow_flex_template_job" "flash_crash_job" {
   provider                = google-beta
   name                    = "flash-crash-detector-live"
-  region                  = var.region
+  region                  = us-central1
   project                 = var.project_id
   container_spec_gcs_path = "gs://${google_storage_bucket.dataflow_templates.name}/templates/flash_crash_spec.json"
 
@@ -96,7 +96,7 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
 
   # Parameters to pass to your pipeline.py
   parameters = {
-    worker_zone         = "us-northeast1-a"
+    worker_zone         = "us-central1-d"
     input_subscription = google_pubsub_subscription.stock_ticks_sub.id
     output_table       = "${var.project_id}:flash_crash_data.crashes"
   }
