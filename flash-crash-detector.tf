@@ -96,7 +96,7 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
 
   # Parameters to pass to your pipeline.py
   parameters = {
-    worker_zone         = "us-central1-d"
+    worker_zone         = "us-central1-f"
     input_subscription = google_pubsub_subscription.stock_ticks_sub.id
     output_table       = "${var.project_id}:flash_crash_data.crashes"
   }
