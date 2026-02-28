@@ -131,7 +131,7 @@ resource "google_cloud_scheduler_job" "poller_trigger" {
   name             = "every-minute-trigger"
   schedule         = "* * * * *"
   attempt_deadline = "30s"
-
+  region           = "us-east1"
   http_target {
     http_method = "POST"
     uri         = google_cloud_run_v2_service.ingestion_service.uri
