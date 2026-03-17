@@ -17,7 +17,7 @@ resource "google_compute_network" "vpc" {
 resource "google_compute_subnetwork" "subnet" {
   name          = "dataflow-subnet"
   ip_cidr_range = "10.0.0.0/24"
-  region        = "us-east1"
+  region        = var.region_dataflow
   network       = google_compute_network.vpc.id
 
   # Important: simple access to Google APIs (like Pub/Sub) without going over public internet
@@ -28,13 +28,13 @@ resource "google_compute_subnetwork" "subnet" {
 resource "google_compute_router" "router" {
   name    = "dataflow-router"
   network = google_compute_network.vpc.id
-  region  = "us-east1"
+  region  = var.region_dataflow
 }
 
 resource "google_compute_router_nat" "nat" {
   name                               = "dataflow-nat"
   router                             = google_compute_router.router.name
-  region                             = "us-east1"
+  region                             = var.region_dataflow
   nat_ip_allocate_option             = "AUTO_ONLY"
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
 }
@@ -85,7 +85,7 @@ resource "google_project_iam_member" "dataflow_worker" {
 # 1. The GCS Bucket for the Template Spec
 resource "google_storage_bucket" "dataflow_templates" {
   name          = "flash-crash-templates-${random_id.bucket_suffix.hex}"
-  location      = var.region
+  location      = var.region_dataflow
   force_destroy = true
 }
 
@@ -93,11 +93,11 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
   provider                = google-beta
   name                    = "flash-crash-detector-job"
   project                 = var.project_id
-  region                  = var.region
+  region                  = var.region_dataflow
   
   # This should point to the metadata.json file your Action uploads
   container_spec_gcs_path = "gs://flash-crash-templates-9ea112ba/templates/flash_crash_spec.json"
-  
+   
   # -----------------------------------------------------------------
   # THE SAFETY LEASH (Must be outside the parameters block!)
   # -----------------------------------------------------------------
@@ -109,8 +109,8 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
   
   # 2. The Networking Fix (Stops it from requesting a Public IP)
   ip_configuration      = "WORKER_IP_PRIVATE"
-  network               = "default"
-  subnetwork            = "regions/us-east1/subnetworks/default"
+  network               = google_compute_network.vpc.id
+  subnetwork            = google_compute_subnetwork.subnet.id
 
   # -----------------------------------------------------------------
   
@@ -137,7 +137,7 @@ resource "google_cloud_run_v2_service" "ingestion_service" {
       image = "${var.region}-docker.pkg.dev/${var.project_id}/flash-crash-repo/ingestion-service:latest"
 
       env {
-        name  = "mike-personal-portfolio"
+        name  = "PROJECT_ID"
         value = var.project_id
       }
     }
