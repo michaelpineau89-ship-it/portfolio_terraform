@@ -93,7 +93,7 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
   provider                = google-beta
   name                    = "flash-crash-detector-job"
   project                 = var.project_id
-  region                  = "us-east1"
+  region                  = var.region
   
   # This should point to the metadata.json file your Action uploads
   container_spec_gcs_path = "gs://flash-crash-templates-9ea112ba/templates/flash_crash_spec.json"
@@ -115,7 +115,7 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
   # -----------------------------------------------------------------
   
   parameters = {
-    worker_zone         = "us-central1-f"
+    worker_zone         = var.preferred_zone
     input_subscription = google_pubsub_subscription.stock_ticks_sub.id
     output_table       = "${var.project_id}:flash_crash_data.crashes"
   }
