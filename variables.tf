@@ -10,6 +10,12 @@ variable "region" {
   default     = "northamerica-northeast1"
 }
 
+variable "region_dataflow" {
+  description = "Default GCP Region"
+  type        = string
+  default     = "northamerica-northeast1"
+}
+
 variable "preferred_zone" {
   description = "Preferred zone needed to be used in dataflow"
   type        = string
