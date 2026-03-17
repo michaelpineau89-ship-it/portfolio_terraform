@@ -84,23 +84,33 @@ resource "google_storage_bucket" "dataflow_templates" {
   force_destroy = true
 }
 
-# 2. The Dataflow Job (Flex Template)
 resource "google_dataflow_flex_template_job" "flash_crash_job" {
-  provider                = google-beta
-  name                    = "flash-crash-detector-live"
-  region                  = "us-central1"
+  name                    = "flash-crash-detector-job"
   project                 = var.project_id
-  container_spec_gcs_path = "gs://${google_storage_bucket.dataflow_templates.name}/templates/flash_crash_spec.json"
+  region                  = "us-east1"
+  
+  # This should point to the metadata.json file your Action uploads
+  container_spec_gcs_path = "gs://flash-crash-templates-9ea112ba/templates/flash_crash_spec.json"
+  
+  # -----------------------------------------------------------------
+  # THE SAFETY LEASH (Must be outside the parameters block!)
+  # -----------------------------------------------------------------
+  
+  # 1. Force the cheapest, most available machines for BOTH the launcher and worker
+  max_workers           = 1
+  machine_type          = "n1-standard-1"
+  launcher_machine_type = "n1-standard-1"
+  
+  # 2. The Networking Fix (Stops it from requesting a Public IP)
+  ip_configuration      = "WORKER_IP_PRIVATE"
+  network               = "default"
+  subnetwork            = "regions/us-east1/subnetworks/default"
 
-  service_account_email = google_service_account.dataflow_sa.email
-
-  # Parameters to pass to your pipeline.py
+  # -----------------------------------------------------------------
+  
   parameters = {
-    worker_zone         = "us-central1-f"
-    input_subscription = google_pubsub_subscription.stock_ticks_sub.id
-    output_table       = "${var.project_id}:flash_crash_data.crashes"
+    
   }
-
 }
 
 # ==========================================
