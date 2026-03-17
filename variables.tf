@@ -10,7 +10,7 @@ variable "region" {
   default     = "us-east1"
 }
 
-variable "prefered_zone" {
+variable "preferred_zone" {
   description = "Preferred zone needed to be used in dataflow"
   type        = string
   default     = "us-east1-b"
