@@ -1,3 +1,8 @@
+provider "google-beta" {
+  project = var.project_id
+  region  = "us-east1"
+}
+
 # ==========================================
 # 1. NETWORKING & SECURITY (The Foundation)
 # ==========================================
