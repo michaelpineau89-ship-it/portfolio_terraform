@@ -2,8 +2,7 @@ name: Terraform Infrastructure
 
 on:
   push:
-    branches: [ "main", "feature/*" ]
-  pull_request:
+    branches: [ "main" ]
 
 jobs:
   terraform:
