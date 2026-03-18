@@ -7,19 +7,19 @@ variable "project_id" {
 variable "region" {
   description = "Default GCP Region"
   type        = string
-  default     = "us-east1"
+  default     = "us-central1"
 }
 
 variable "region_dataflow" {
   description = "Default GCP Region"
   type        = string
-  default     = "northamerica-northeast1"
+  default     = "us-central1"
 }
 
 variable "preferred_zone" {
   description = "Preferred zone needed to be used in dataflow"
   type        = string
-  default     = "northamerica-northeast1-b"
+  default     = "us-central1"
 }
 variable "tf_service_account_email" {
   description = "The Service Account email responsible for deploying infrastructure (used for impersonation/auditing)"
