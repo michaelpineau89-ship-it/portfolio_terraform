@@ -1,6 +1,5 @@
 provider "google-beta" {
   project = var.project_id
-  region  = "us-east1"
 }
 
 # ==========================================
@@ -115,7 +114,7 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
   # -----------------------------------------------------------------
 
   service_account_email   = google_service_account.dataflow_sa.email
-    
+
   parameters = {
     worker_zone         = var.preferred_zone
     input_subscription = google_pubsub_subscription.stock_ticks_sub.id
