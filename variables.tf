@@ -19,7 +19,7 @@ variable "region_dataflow" {
 variable "preferred_zone" {
   description = "Preferred zone needed to be used in dataflow"
   type        = string
-  default     = "northamerica-northeast1-a"
+  default     = "northamerica-northeast1-b"
 }
 variable "tf_service_account_email" {
   description = "The Service Account email responsible for deploying infrastructure (used for impersonation/auditing)"
