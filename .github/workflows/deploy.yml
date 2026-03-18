@@ -2,8 +2,7 @@ name: Terraform Infrastructure
 
 on:
   push:
-    branches: [ "main", "feature/*" ]
-  pull_request:
+    branches: [ "main" ]
 
 jobs:
   terraform:
@@ -23,7 +22,7 @@ jobs:
       uses: 'google-github-actions/auth@v2'
       with:
         # The exact same provider string you used in the other repo
-        workload_identity_provider: '${{ secrets.GCP_WIF_PROVIDER }}'
+        workload_identity_provider: '${{ secrets.WIF_PROVIDER }}'
         # Note: We use the DEPLOYER account here, not the Runner
         service_account: 'terraform-deployer@mike-personal-portfolio.iam.gserviceaccount.com'
 
