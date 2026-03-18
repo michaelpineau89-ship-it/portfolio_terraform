@@ -7,7 +7,7 @@ variable "project_id" {
 variable "region" {
   description = "Default GCP Region"
   type        = string
-  default     = "northamerica-northeast1"
+  default     = "us-east1"
 }
 
 variable "region_dataflow" {
