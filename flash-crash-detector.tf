@@ -103,8 +103,8 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
   
   # 1. Force the cheapest, most available machines for BOTH the launcher and worker
   max_workers           = 1
-  machine_type          = "n1-standard-1"
-  launcher_machine_type = "n1-standard-1"
+  machine_type          = "e2-medium"
+  launcher_machine_type = "e2-medium"
   
   # 2. The Networking Fix (Stops it from requesting a Public IP)
   ip_configuration      = "WORKER_IP_PRIVATE"
