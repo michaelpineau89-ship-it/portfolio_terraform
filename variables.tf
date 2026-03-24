@@ -13,7 +13,7 @@ variable "region" {
 variable "region_dataflow" {
   description = "Default GCP Region"
   type        = string
-  default     = "us-east1"
+  default     = "us-central1"
 }
 
 variable "preferred_zone" {
