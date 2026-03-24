@@ -109,7 +109,7 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
   # 2. The Networking Fix (Stops it from requesting a Public IP)
   ip_configuration      = "WORKER_IP_PRIVATE"
   network               = google_compute_network.vpc.id
-  subnetwork            = google_compute_subnetwork.subnet.id
+  subnetwork            = google_compute_subnetwork.subnet.self_link
 
   # -----------------------------------------------------------------
 
