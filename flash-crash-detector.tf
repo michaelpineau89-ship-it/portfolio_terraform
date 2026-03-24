@@ -95,7 +95,7 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
   region                  = var.region_dataflow
   
   # This should point to the metadata.json file your Action uploads
-  container_spec_gcs_path = "gs://flash-crash-staging-9ea112ba/templates/flash_crash_spec.json"
+  container_spec_gcs_path = "gs://flash-crash-staging-9ea112ba/templates/flash_crash_template.json"
    
   # -----------------------------------------------------------------
   # THE SAFETY LEASH (Must be outside the parameters block!)
