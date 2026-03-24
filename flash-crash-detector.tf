@@ -131,11 +131,19 @@ resource "google_cloud_run_v2_service" "ingestion_service" {
   deletion_protection = false
 
   template {
-    containers {
-      # Terraform will deploy whatever image tag is currently "latest" 
-      # or you can pass a variable for specific SHA
-      image = "${var.region}-docker.pkg.dev/${var.project_id}/flash-crash-repo/ingestion-service:latest"
+    # 1. Keep the CPU running 24/7 so the WebSocket doesn't freeze
+    annotations = {
+      "run.googleapis.com/cpu-throttling" = "false"
+    }
 
+    # 2. Ensure at least one container is always alive
+    scaling {
+      min_instance_count = 1
+      max_instance_count = 1
+    }
+
+    containers {
+      image = "${var.region}-docker.pkg.dev/${var.project_id}/flash-crash-repo/ingestion-service:latest"
       env {
         name  = "PROJECT_ID"
         value = var.project_id
