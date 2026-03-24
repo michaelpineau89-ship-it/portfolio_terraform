@@ -118,7 +118,7 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
   parameters = {
     worker_zone         = var.preferred_zone
     input_subscription = google_pubsub_subscription.stock_ticks_sub.id
-    output_table       = "${var.project_id}:flash_crash_data.crashes"
+    output_table       = "${var.project_id}:flash_crash_data.aggregated_stats"
   }
 }
 
@@ -175,15 +175,15 @@ resource "random_id" "bucket_suffix" {
   byte_length = 4
 }
 
-# Pub/Sub Topic for Raw Stock Data
-resource "google_pubsub_topic" "stock_ticks" {
-  name = "stock-ticks-topic"
+# Pub/Sub Topic for Raw crypto Data
+resource "google_pubsub_topic" "crypto_ticks" {
+  name = "crypto-ticks"
 }
 
 # Subscription for Dataflow to read from
-resource "google_pubsub_subscription" "stock_ticks_sub" {
-  name  = "stock-ticks-sub"
-  topic = google_pubsub_topic.stock_ticks.name
+resource "google_pubsub_subscription" "crypto_ticks_sub" {
+  name  = "crypto-ticks-sub"
+  topic = google_pubsub_topic.crypto_ticks.name
 
   # Enable exactly-once delivery if your logic requires strict accuracy
   enable_exactly_once_delivery = true
@@ -200,28 +200,17 @@ resource "google_bigquery_table" "table" {
   dataset_id = google_bigquery_dataset.dataset.dataset_id
   table_id   = "aggregated_stats"
 
-  schema = <<EOF
+schema = <<EOF
   [
-  {
-    "name": "symbol",
-    "type": "STRING",
-    "mode": "REQUIRED"
-  },
-  {
-    "name": "window_start",
-    "type": "TIMESTAMP",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "price_avg",
-    "type": "FLOAT",
-    "mode": "NULLABLE"
-  },
-  {
-    "name": "volatility_index",
-    "type": "FLOAT",
-    "mode": "NULLABLE"
-  }
-]
+  { "name": "ticker", "type": "STRING", "mode": "REQUIRED" },
+  { "name": "window_start", "type": "STRING", "mode": "NULLABLE" },
+  { "name": "window_end", "type": "STRING", "mode": "NULLABLE" },
+  { "name": "trade_count", "type": "INTEGER", "mode": "NULLABLE" },
+  { "name": "avg_price", "type": "FLOAT", "mode": "NULLABLE" },
+  { "name": "max_price", "type": "FLOAT", "mode": "NULLABLE" },
+  { "name": "min_price", "type": "FLOAT", "mode": "NULLABLE" },
+  { "name": "drop_pct", "type": "FLOAT", "mode": "NULLABLE" },
+  { "name": "flash_crash_detected", "type": "BOOLEAN", "mode": "NULLABLE" }
+  ]
 EOF
 }
