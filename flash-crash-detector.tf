@@ -116,7 +116,6 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
   service_account_email   = google_service_account.dataflow_sa.email
 
   parameters = {
-    worker_zone         = var.preferred_zone
     input_subscription = google_pubsub_subscription.crypto_ticks_sub.id
     output_table       = "${var.project_id}:flash_crash_data.aggregated_stats"
   }
