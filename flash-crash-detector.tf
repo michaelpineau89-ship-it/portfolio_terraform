@@ -97,9 +97,6 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
   # This should point to the metadata.json file your Action uploads
   container_spec_gcs_path = "gs://flash-crash-staging-9ea112ba/templates/flash_crash_template.json"
    
-  # -----------------------------------------------------------------
-  # THE SAFETY LEASH (Must be outside the parameters block!)
-  # -----------------------------------------------------------------
   
   # 1. Force the cheapest, most available machines for BOTH the launcher and worker
   max_workers           = 1
@@ -122,53 +119,7 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
 }
 
 # ==========================================
-# 4. CLOUD FUNCTIONS
-# ==========================================
-resource "google_cloud_run_v2_service" "ingestion_service" {
-  name                = "stock-ingestion-service"
-  location            = var.region
-  ingress             = "INGRESS_TRAFFIC_ALL"
-  deletion_protection = false
-
-  template {
-    # 1. Keep the CPU running 24/7 so the WebSocket doesn't freeze
-    annotations = {
-      "run.googleapis.com/cpu-throttling" = "false"
-    }
-
-    # 2. Ensure at least one container is always alive
-    scaling {
-      min_instance_count = 1
-      max_instance_count = 1
-    }
-
-    containers {
-      image = "${var.region}-docker.pkg.dev/${var.project_id}/flash-crash-repo/ingestion-service:latest"
-      env {
-        name  = "PROJECT_ID"
-        value = var.project_id
-      }
-    }
-    service_account = google_service_account.dataflow_sa.email
-  }
-}
-
-resource "google_cloud_scheduler_job" "poller_trigger" {
-  name             = "every-minute-trigger"
-  schedule         = "* * * * *"
-  attempt_deadline = "30s"
-  region           = "us-east1"
-  http_target {
-    http_method = "POST"
-    uri         = google_cloud_run_v2_service.ingestion_service.uri
-
-    oidc_token {
-      service_account_email = google_service_account.dataflow_sa.email
-    }
-  }
-}
-# ==========================================
-# 5. DATA INFRASTRUCTURE
+# 4. DATA INFRASTRUCTURE
 # ==========================================
 
 # GCS Bucket for Dataflow Staging/Temp files
