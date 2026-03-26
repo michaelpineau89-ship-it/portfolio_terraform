@@ -117,6 +117,10 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
     input_subscription = google_pubsub_subscription.crypto_ticks_sub.id
     output_table       = "${var.project_id}:flash_crash_data.aggregated_stats"
   }
+
+  depends_on = [
+    google_project_iam_member.dataflow_worker_bindings
+  ]
 }
 
 # ==========================================
