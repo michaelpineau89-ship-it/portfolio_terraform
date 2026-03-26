@@ -2,9 +2,35 @@ provider "google-beta" {
   project = var.project_id
 }
 
+locals {
+  dataflow_roles = [
+    "roles/dataflow.worker",
+    "roles/pubsub.subscriber",
+    "roles/pubsub.viewer",
+    "roles/bigquery.dataEditor",
+    "roles/bigquery.jobUser",
+    "roles/artifactregistry.reader",
+    "roles/storage.objectAdmin"
+  ]
+}
+
 # ==========================================
 # 1. NETWORKING & SECURITY (The Foundation)
 # ==========================================
+
+resource "google_project_service" "container_scanning_api" {
+  project            = var.project_id
+  service            = "containerscanning.googleapis.com"
+  disable_on_destroy = false 
+}
+
+resource "google_project_iam_member" "dataflow_worker_bindings" {
+  for_each = toset(local.dataflow_roles)
+
+  project = var.project_id
+  role    = each.value
+  member  = "serviceAccount:${google_service_account.dataflow_worker_sa.email}"
+}
 
 # Custom VPC so we have full control over the network
 resource "google_compute_network" "vpc" {
@@ -38,30 +64,16 @@ resource "google_compute_router_nat" "nat" {
   source_subnetwork_ip_ranges_to_nat = "ALL_SUBNETWORKS_ALL_IP_RANGES"
 }
 
-# FIREWALL: Dataflow workers need to talk to EACH OTHER (Shuffle)
-resource "google_compute_firewall" "dataflow_internal" {
-  name    = "allow-dataflow-internal"
-  network = google_compute_network.vpc.id
-
-  allow {
-    protocol = "tcp"
-    ports    = ["12345-12346"] # Critical ports for Dataflow shuffle
-  }
-
-  source_tags = ["dataflow"]
-  target_tags = ["dataflow"]
-}
-
 # ==========================================
 # 2. IAM & SERVICE ACCOUNTS
 # ==========================================
 
 # Dedicated Service Account for the Pipeline (Best Practice)
-resource "google_service_account" "dataflow_sa" {
-  account_id   = "flash-crash-runner"
-  display_name = "Flash Crash Dataflow Runner"
+resource "google_service_account" "dataflow_worker_sa" {
+  account_id   = "flash-crash-worker"
+  display_name = "Dataflow Least Privilege Worker SA"
+  description  = "Strictly scoped account for running the crypto ingestion pipeline"
 }
-
 # Grant Permissions
 resource "google_project_iam_member" "dataflow_worker" {
   for_each = toset([
