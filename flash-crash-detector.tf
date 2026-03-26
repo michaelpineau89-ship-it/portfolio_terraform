@@ -122,7 +122,7 @@ resource "google_dataflow_flex_template_job" "flash_crash_job" {
 
   # -----------------------------------------------------------------
 
-  service_account_email   = google_service_account.dataflow_sa.email
+  service_account_email   = google_service_account.dataflow_worker_sa.email
 
   parameters = {
     input_subscription = google_pubsub_subscription.crypto_ticks_sub.id
