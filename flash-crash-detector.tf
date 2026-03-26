@@ -5,11 +5,14 @@ provider "google-beta" {
 locals {
   dataflow_roles = [
     "roles/dataflow.worker",
+    "roles/dataflow.admin",
     "roles/pubsub.subscriber",
     "roles/pubsub.viewer",
+    "roles/pubsub.editor",
     "roles/bigquery.dataEditor",
     "roles/bigquery.jobUser",
     "roles/artifactregistry.reader",
+    "roles/artifactregistry.writer",
     "roles/storage.objectAdmin"
   ]
 }
@@ -74,21 +77,7 @@ resource "google_service_account" "dataflow_worker_sa" {
   display_name = "Dataflow Least Privilege Worker SA"
   description  = "Strictly scoped account for running the crypto ingestion pipeline"
 }
-# Grant Permissions
-resource "google_project_iam_member" "dataflow_worker" {
-  for_each = toset([
-    "roles/dataflow.worker",
-    "roles/dataflow.admin",
-    "roles/pubsub.editor",
-    "roles/bigquery.dataEditor",
-    "roles/storage.objectAdmin",
-    "roles/artifactregistry.writer"
-  ])
-  role   = each.key
-  member = "serviceAccount:${google_service_account.dataflow_worker_sa.email}"
-  # usage: coalesce(value1, value2) -> takes the first one that isn't null/empty
-  project = coalesce(var.project_id, "mike-personal-portfolio")
-}
+
 
 # ==========================================
 # 3. DATAFLOW
