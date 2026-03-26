@@ -57,7 +57,7 @@ resource "google_iam_workload_identity_pool_provider" "github_provider" {
 
 # 3. The Permission (Allowing the GitHub Repo to act as the Service Account)
 resource "google_service_account_iam_member" "wif_binding" {
-  service_account_id = google_service_account.dataflow_sa.name
+  service_account_id = google_service_account.dataflow_worker_sa.name
   role               = "roles/iam.workloadIdentityUser"
 
   # TRUST ONLY THIS REPO:
