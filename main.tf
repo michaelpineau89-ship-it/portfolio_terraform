@@ -10,12 +10,19 @@ terraform {
     }
     google-beta = {
       source  = "hashicorp/google-beta"
-      version = "~> 7.0"
+      version = "~> 6.0"
     }
   }
 }
 
 provider "google" {
+  project = "mike-personal-portfolio"
+  region  = "us-central1"
+}
+
+# Temporary: re-added so Terraform can decode prior flash-crash state and plan destroys.
+# Remove this block after a successful apply cleans up the orphaned resources.
+provider "google-beta" {
   project = "mike-personal-portfolio"
   region  = "us-central1"
 }
@@ -59,14 +66,6 @@ resource "google_iam_workload_identity_pool_provider" "github_provider" {
   }
 }
 
-# 3. The Permission (Allowing the GitHub Repo to act as the Service Account)
-resource "google_service_account_iam_member" "wif_binding" {
-  service_account_id = google_service_account.dataflow_worker_sa.name
-  role               = "roles/iam.workloadIdentityUser"
-
-  # TRUST ONLY THIS REPO:
-  member = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/${var.project_id}/flash_crash_detector"
-}
 
 # Output the Provider Name (You need this for the GitHub Action)
 output "wif_provider_name" {
