@@ -8,10 +8,21 @@ terraform {
       source  = "hashicorp/google"
       version = "~> 6.0"
     }
+    google-beta = {
+      source  = "hashicorp/google-beta"
+      version = "~> 6.0"
+    }
   }
 }
 
 provider "google" {
+  project = "mike-personal-portfolio"
+  region  = "us-central1"
+}
+
+# Temporary: re-added so Terraform can decode prior flash-crash state and plan destroys.
+# Remove this block after a successful apply cleans up the orphaned resources.
+provider "google-beta" {
   project = "mike-personal-portfolio"
   region  = "us-central1"
 }
