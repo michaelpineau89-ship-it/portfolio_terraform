@@ -64,17 +64,17 @@ resource "google_cloud_scheduler_job" "daily_trigger" {
 # ==============================================================================
 
 data "google_secret_manager_secret_version" "fmp_api_key" {
-  secret  = "fmp-api-key"
+  secret  = "fmp_api_key"
   version = "latest"
 }
 
 data "google_secret_manager_secret_version" "finnhub_api_key" {
-  secret  = "finnhub-api-key"
+  secret  = "finnhub_api_key"
   version = "latest"
 }
 
 data "google_secret_manager_secret_version" "alphavantage_api_key" {
-  secret  = "alphavantage-api-key"
+  secret  = "alphavantage_api_key"
   version = "latest"
 }
 

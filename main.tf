@@ -20,13 +20,6 @@ provider "google" {
   region  = "us-central1"
 }
 
-# Temporary: re-added so Terraform can decode prior flash-crash state and plan destroys.
-# Remove this block after a successful apply cleans up the orphaned resources.
-provider "google-beta" {
-  project = "mike-personal-portfolio"
-  region  = "us-central1"
-}
-
 # Create the "Warehouse" for your docker images
 resource "google_artifact_registry_repository" "repo" {
   location      = var.region
