@@ -60,23 +60,8 @@ resource "google_cloud_scheduler_job" "daily_trigger" {
 }
 
 # ==============================================================================
-# 3. SECRETS LOOKUP
+# 3. CLOUD RUN SERVICE LOOKUPS (deployed & managed by gcp-financial-market-tracker repo)
 # ==============================================================================
-
-data "google_secret_manager_secret_version" "fmp_api_key" {
-  secret  = "fmp_api_key"
-  version = "latest"
-}
-
-data "google_secret_manager_secret_version" "finnhub_api_key" {
-  secret  = "finnhub_api_key"
-  version = "latest"
-}
-
-data "google_secret_manager_secret_version" "alphavantage_api_key" {
-  secret  = "alphavantage_api_key"
-  version = "latest"
-}
 
 # ==============================================================================
 # 4. THE SPOKES (Cloud Run Services & Push Subscriptions)
@@ -85,27 +70,9 @@ data "google_secret_manager_secret_version" "alphavantage_api_key" {
 # ------------------------------------------------------------------------------
 # A. FMP (Fundamentals & 13F)
 # ------------------------------------------------------------------------------
-resource "google_cloud_run_v2_service" "fmp_service" {
+data "google_cloud_run_v2_service" "fmp_service" {
   name     = "fmp-ingestor"
   location = var.region
-  ingress  = "INGRESS_TRAFFIC_INTERNAL_ONLY"
-
-  template {
-    service_account = google_service_account.pipeline_sa.email
-    timeout         = "600s" # 10 mins
-
-    containers {
-      image = "${var.region}-docker.pkg.dev/${var.project_id}/financial-trackers/fmp-ingestor:latest"
-      env {
-        name  = "PROJECT_ID"
-        value = var.project_id
-      }
-      env {
-        name  = "FMP_API_KEY"
-        value = data.google_secret_manager_secret_version.fmp_api_key.secret_data
-      }
-    }
-  }
 }
 
 resource "google_pubsub_subscription" "fmp_push_sub" {
@@ -120,24 +87,9 @@ resource "google_pubsub_subscription" "fmp_push_sub" {
 # ------------------------------------------------------------------------------
 # B. EDGAR (SEC Filings & Whale Tracker)
 # ------------------------------------------------------------------------------
-resource "google_cloud_run_v2_service" "edgar_service" {
+data "google_cloud_run_v2_service" "edgar_service" {
   name     = "edgar-ingestor"
   location = var.region
-  ingress  = "INGRESS_TRAFFIC_INTERNAL_ONLY"
-
-  template {
-    service_account = google_service_account.pipeline_sa.email
-    timeout         = "600s"
-
-    containers {
-      image = "${var.region}-docker.pkg.dev/${var.project_id}/financial-trackers/edgar-ingestor:latest"
-      env {
-        name  = "PROJECT_ID"
-        value = var.project_id
-      }
-      # No API key needed for SEC EDGAR
-    }
-  }
 }
 
 resource "google_pubsub_subscription" "edgar_push_sub" {
@@ -152,27 +104,9 @@ resource "google_pubsub_subscription" "edgar_push_sub" {
 # ------------------------------------------------------------------------------
 # C. Finnhub (Alternative Data & News)
 # ------------------------------------------------------------------------------
-resource "google_cloud_run_v2_service" "finnhub_service" {
+data "google_cloud_run_v2_service" "finnhub_service" {
   name     = "finnhub-ingestor"
   location = var.region
-  ingress  = "INGRESS_TRAFFIC_INTERNAL_ONLY"
-
-  template {
-    service_account = google_service_account.pipeline_sa.email
-    timeout         = "600s"
-
-    containers {
-      image = "${var.region}-docker.pkg.dev/${var.project_id}/financial-trackers/finnhub-ingestor:latest"
-      env {
-        name  = "PROJECT_ID"
-        value = var.project_id
-      }
-      env {
-        name  = "FINNHUB_API_KEY"
-        value = data.google_secret_manager_secret_version.finnhub_api_key.secret_data
-      }
-    }
-  }
 }
 
 resource "google_pubsub_subscription" "finnhub_push_sub" {
@@ -187,28 +121,9 @@ resource "google_pubsub_subscription" "finnhub_push_sub" {
 # ------------------------------------------------------------------------------
 # D. Alpha Vantage (Daily Market Pricing)
 # ------------------------------------------------------------------------------
-resource "google_cloud_run_v2_service" "alphavantage_service" {
+data "google_cloud_run_v2_service" "alphavantage_service" {
   name     = "alphavantage-ingestor"
   location = var.region
-  ingress  = "INGRESS_TRAFFIC_INTERNAL_ONLY"
-
-  template {
-    service_account = google_service_account.pipeline_sa.email
-    # Alpha Vantage has strict rate limits, this container takes the longest
-    timeout = "1800s"
-
-    containers {
-      image = "${var.region}-docker.pkg.dev/${var.project_id}/financial-trackers/alphavantage-ingestor:latest"
-      env {
-        name  = "PROJECT_ID"
-        value = var.project_id
-      }
-      env {
-        name  = "ALPHA_VANTAGE_API_KEY"
-        value = data.google_secret_manager_secret_version.alphavantage_api_key.secret_data
-      }
-    }
-  }
 }
 
 resource "google_pubsub_subscription" "alphavantage_push_sub" {
