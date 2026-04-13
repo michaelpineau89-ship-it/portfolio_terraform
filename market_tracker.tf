@@ -1,9 +1,3 @@
-variable "region" {
-  description = "The GCP region for resources"
-  type        = string
-  default     = "us-central1"
-}
-
 # ==============================================================================
 # 1. CORE FOUNDATION (Storage & Identity)
 # ==============================================================================
