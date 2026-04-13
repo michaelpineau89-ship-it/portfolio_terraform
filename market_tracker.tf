@@ -79,7 +79,7 @@ resource "google_pubsub_subscription" "fmp_push_sub" {
   name  = "fmp-push-sub"
   topic = google_pubsub_topic.market_ingestion_topic.name
   push_config {
-    push_endpoint = google_cloud_run_v2_service.fmp_service.uri
+    push_endpoint = data.google_cloud_run_v2_service.fmp_service.uri
     oidc_token { service_account_email = google_service_account.pipeline_sa.email }
   }
 }
@@ -96,7 +96,7 @@ resource "google_pubsub_subscription" "edgar_push_sub" {
   name  = "edgar-push-sub"
   topic = google_pubsub_topic.market_ingestion_topic.name
   push_config {
-    push_endpoint = google_cloud_run_v2_service.edgar_service.uri
+    push_endpoint = data.google_cloud_run_v2_service.edgar_service.uri
     oidc_token { service_account_email = google_service_account.pipeline_sa.email }
   }
 }
@@ -113,7 +113,7 @@ resource "google_pubsub_subscription" "finnhub_push_sub" {
   name  = "finnhub-push-sub"
   topic = google_pubsub_topic.market_ingestion_topic.name
   push_config {
-    push_endpoint = google_cloud_run_v2_service.finnhub_service.uri
+    push_endpoint = data.google_cloud_run_v2_service.finnhub_service.uri
     oidc_token { service_account_email = google_service_account.pipeline_sa.email }
   }
 }
@@ -130,7 +130,7 @@ resource "google_pubsub_subscription" "alphavantage_push_sub" {
   name  = "alphavantage-push-sub"
   topic = google_pubsub_topic.market_ingestion_topic.name
   push_config {
-    push_endpoint = google_cloud_run_v2_service.alphavantage_service.uri
+    push_endpoint = data.google_cloud_run_v2_service.alphavantage_service.uri
     oidc_token { service_account_email = google_service_account.pipeline_sa.email }
   }
 }
