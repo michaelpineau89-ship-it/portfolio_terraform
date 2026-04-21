@@ -31,7 +31,7 @@ resource "google_project_iam_member" "secret_accessor" {
   member  = "serviceAccount:${google_service_account.pipeline_sa.email}"
 }
 
-# Grant Cloud Run Invoke access (so Pub/Sub can trigger the containers)
+# Grant invoke access so Cloud Scheduler can call the functions' underlying Cloud Run services
 resource "google_project_iam_member" "run_invoker" {
   project = var.project_id
   role    = "roles/run.invoker"
@@ -39,98 +39,56 @@ resource "google_project_iam_member" "run_invoker" {
 }
 
 # ==============================================================================
-# 2. THE FAN-OUT HUB (Scheduler & Pub/Sub)
+# 2. DIRECT FUNCTION TRIGGERS (Scheduler -> Cloud Functions)
 # ==============================================================================
 
-resource "google_pubsub_topic" "market_ingestion_topic" {
-  name = "daily-market-ingestion-trigger"
+locals {
+  market_tracker_functions = {
+    fmp = {
+      name        = "fmp-ingestor"
+      description = "Triggers the FMP market ingestion function"
+    }
+    edgar = {
+      name        = "edgar-ingestor"
+      description = "Triggers the EDGAR market ingestion function"
+    }
+    finnhub = {
+      name        = "finnhub-ingestor"
+      description = "Triggers the Finnhub market ingestion function"
+    }
+    alphavantage = {
+      name        = "alphavantage-ingestor"
+      description = "Triggers the Alpha Vantage market ingestion function"
+    }
+  }
 }
 
-resource "google_cloud_scheduler_job" "daily_trigger" {
-  name             = "trigger-market-ingestion-daily"
-  description      = "Fires at 6 PM EST to fan-out all market ingestion containers"
+resource "google_cloud_scheduler_job" "market_ingestion_trigger" {
+  for_each         = local.market_tracker_functions
+  name             = "trigger-${each.value.name}-daily"
+  description      = each.value.description
   schedule         = "0 18 * * 1-5" # 6 PM, Mon-Fri
   time_zone        = "America/New_York"
   attempt_deadline = "320s"
 
-  pubsub_target {
-    topic_name = google_pubsub_topic.market_ingestion_topic.id
-    data       = base64encode("{\"action\": \"start_daily_ingestion\"}")
+  http_target {
+    http_method = "POST"
+    uri         = "https://${var.region}-${var.project_id}.cloudfunctions.net/${each.value.name}"
+    headers = {
+      "Content-Type" = "application/json"
+    }
+    body = base64encode(jsonencode({
+      source = "cloud-scheduler"
+      job    = "daily-market-ingestion"
+    }))
+
+    oidc_token {
+      service_account_email = google_service_account.pipeline_sa.email
+      audience              = "https://${var.region}-${var.project_id}.cloudfunctions.net/${each.value.name}"
+    }
   }
 }
 
 # ==============================================================================
-# 3. CLOUD RUN SERVICE LOOKUPS (deployed & managed by gcp-financial-market-tracker repo)
+# 3. SCHEDULED FUNCTIONS
 # ==============================================================================
-
-# ==============================================================================
-# 4. THE SPOKES (Cloud Run Services & Push Subscriptions)
-# ==============================================================================
-
-# ------------------------------------------------------------------------------
-# A. FMP (Fundamentals & 13F)
-# ------------------------------------------------------------------------------
-data "google_cloud_run_v2_service" "fmp_service" {
-  name     = "fmp-ingestor"
-  location = var.region
-}
-
-resource "google_pubsub_subscription" "fmp_push_sub" {
-  name  = "fmp-push-sub"
-  topic = google_pubsub_topic.market_ingestion_topic.name
-  push_config {
-    push_endpoint = data.google_cloud_run_v2_service.fmp_service.uri
-    oidc_token { service_account_email = google_service_account.pipeline_sa.email }
-  }
-}
-
-# ------------------------------------------------------------------------------
-# B. EDGAR (SEC Filings & Whale Tracker)
-# ------------------------------------------------------------------------------
-data "google_cloud_run_v2_service" "edgar_service" {
-  name     = "edgar-ingestor"
-  location = var.region
-}
-
-resource "google_pubsub_subscription" "edgar_push_sub" {
-  name  = "edgar-push-sub"
-  topic = google_pubsub_topic.market_ingestion_topic.name
-  push_config {
-    push_endpoint = data.google_cloud_run_v2_service.edgar_service.uri
-    oidc_token { service_account_email = google_service_account.pipeline_sa.email }
-  }
-}
-
-# ------------------------------------------------------------------------------
-# C. Finnhub (Alternative Data & News)
-# ------------------------------------------------------------------------------
-data "google_cloud_run_v2_service" "finnhub_service" {
-  name     = "finnhub-ingestor"
-  location = var.region
-}
-
-resource "google_pubsub_subscription" "finnhub_push_sub" {
-  name  = "finnhub-push-sub"
-  topic = google_pubsub_topic.market_ingestion_topic.name
-  push_config {
-    push_endpoint = data.google_cloud_run_v2_service.finnhub_service.uri
-    oidc_token { service_account_email = google_service_account.pipeline_sa.email }
-  }
-}
-
-# ------------------------------------------------------------------------------
-# D. Alpha Vantage (Daily Market Pricing)
-# ------------------------------------------------------------------------------
-data "google_cloud_run_v2_service" "alphavantage_service" {
-  name     = "alphavantage-ingestor"
-  location = var.region
-}
-
-resource "google_pubsub_subscription" "alphavantage_push_sub" {
-  name  = "alphavantage-push-sub"
-  topic = google_pubsub_topic.market_ingestion_topic.name
-  push_config {
-    push_endpoint = data.google_cloud_run_v2_service.alphavantage_service.uri
-    oidc_token { service_account_email = google_service_account.pipeline_sa.email }
-  }
-}
